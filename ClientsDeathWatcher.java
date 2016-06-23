@@ -11,38 +11,37 @@ import android.util.Log;
 public class ClientsDeathWatcher {
 
     private static final String TAG = "ClientsDeathWatcher";
-
-    private ArrayMap<DeathCallBack, String> mCallbacks = new ArrayMap<>();
+    private ArrayMap<String, DeathCallBack> mCallbacks = new ArrayMap<>();
 
     private final class DeathCallBack implements IBinder.DeathRecipient {
+        String pn;
 
-        IBinder mService;
-
-        DeathCallBack(IBinder service) {
-            mService = service;
+        DeathCallBack(String packageName) {
+            pn = packageName;
         }
 
         public void binderDied() {
             synchronized (mCallbacks) {
-                clientDeath(this);
+                clientDeath(pn);
             }
         }
     }
 
     //To be called only from thread-safe functions - optional to put code inside "binder died"
-    private void clientDeath(DeathCallBack mService) {
-        String deathPackageName = mCallbacks.get(mService);
-        Log.e(TAG, "deathPackageName: " + deathPackageName);
-        mCallbacks.remove(mService);
+    private void clientDeath(String packageName) {
+        Log.e(TAG, "deathPackageName: " + packageName);
+        mCallbacks.remove(packageName);
     }
 
     //Optional to throw exception and not do boolean return
     public boolean register(IBinder token, String packageName) {
         synchronized (mCallbacks) {
             try {
-                DeathCallBack mDeathCallBack = new DeathCallBack(token);
-                token.linkToDeath(mDeathCallBack, 0);
-                mCallbacks.put(mDeathCallBack, packageName);
+                if (!mCallbacks.containsKey(packageName)) {
+                    DeathCallBack mDeathCallBack = new DeathCallBack(packageName);
+                    mCallbacks.put(packageName, mDeathCallBack);
+                    token.linkToDeath(mDeathCallBack, 0);
+                }
                 return true;
             } catch (RemoteException e) {
                 e.printStackTrace();
@@ -50,4 +49,5 @@ public class ClientsDeathWatcher {
             }
         }
     }
+
 }
