@@ -35,7 +35,7 @@ public class KeepTrackService extends Service {
         public void registerCallBacks(IBinder cb, String packageName) throws RemoteException {
 
             boolean isRegistered = mCallBacks.register(cb , packageName);
-            Log.e(packageName + " is register okay == ", " " + isRegistered);
+            Log.e(packageName + " is register okay ", " " + isRegistered);
         }
     };
 
