@@ -14,14 +14,17 @@ public class ClientsDeathWatcher {
     private ArrayMap<String, DeathCallBack> mCallbacks = new ArrayMap<>();
 
     private final class DeathCallBack implements IBinder.DeathRecipient {
-        String pn;
+        private String pn;
+        private IBinder mBinder;
 
-        DeathCallBack(String packageName) {
+        DeathCallBack(String packageName,IBinder binder) {
             pn = packageName;
+            mBinder = binder;
         }
 
         public void binderDied() {
             synchronized (mCallbacks) {
+                mBinder.unlinkToDeath(this,0);
                 clientDeath(pn);
             }
         }
@@ -38,7 +41,7 @@ public class ClientsDeathWatcher {
         synchronized (mCallbacks) {
             try {
                 if (!mCallbacks.containsKey(packageName)) {
-                    DeathCallBack mDeathCallBack = new DeathCallBack(packageName);
+                    DeathCallBack mDeathCallBack = new DeathCallBack(packageName,token);
                     mCallbacks.put(packageName, mDeathCallBack);
                     token.linkToDeath(mDeathCallBack, 0);
                 }
